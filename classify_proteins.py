@@ -14,5 +14,5 @@ def file_to_seqs(filepath):
             seq += line
     return sequences[1:]
 
-print(file_to_seqs("./sequences/globin.fasta"))
-print(file_to_seqs("./sequences/zincfinger.fasta"))
+globin_seqs = file_to_seqs("./sequences/globin.fasta")
+zinc_seqs = file_to_seqs("./sequences/zincfinger.fasta")
