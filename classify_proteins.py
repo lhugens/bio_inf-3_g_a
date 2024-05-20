@@ -10,9 +10,15 @@ Goal: given the protein sequences from two protein families
 (globin and zinc finger), create a predictive model for a 
 binary classification problem.
 '''
-
-from sklearn import svm
 import pandas as pd
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import recall_score, precision_score, f1_score
 
 def gen_all_2mers():
     # amino_acids =  ['A', 'R', 'N', 'D', 'C', 'Q', 
@@ -79,7 +85,7 @@ df = create_df()
 fill_df(df, zincfinger_seqs, "zincfinger")
 fill_df(df, globin_seqs, "globin")
 
-print(df)
+# print(df)
 
 # # find letters that are not in our alphabet
 # amino_acids =  ['A', 'R', 'N', 'D', 'C', 'Q', 
@@ -107,4 +113,42 @@ print(df)
 #     chemically similar and may not be easily differentiated in some types of analysis.
 # '''
 
-# Use 2 or 3 ML algorithms: SVM, Random Forests of NayveBayes
+# Use 2 or 3 ML algorithms: SVM, Random Forests of NaiveBayes
+# Evaluate the models with 3 or 4 measures, e.g. recall, precision or F1-score
+
+X = df.iloc[:,:-1].values
+y = df.iloc[:,-1].values
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+
+skf = StratifiedKFold(n_splits=10)
+
+for i, (train_index, test_index) in enumerate(skf.split(X, y)):
+    print(f"Fold {i}:")
+    # print(f"    Train: index={train_index}")
+    # print(f"    Test: index={test_index}")
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+
+    # SVM
+    clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+    y_pred = clf.fit(X_train, y_train).predict(X_test)
+    print("    SVM:")
+    print(f"        Recall: {round(recall_score(y_test, y_pred, average='micro'), 3)}")
+    print(f"        Precision: {round(precision_score(y_test, y_pred, average='micro'), 3)}")
+    print(f"        F1 score: {round(f1_score(y_test, y_pred, average='micro'), 3)}")
+
+    # Random Forests
+    clf = RandomForestClassifier(max_depth=2, random_state=0)
+    y_pred = clf.fit(X_train, y_train).predict(X_test)
+    print("    Random Forests:")
+    print(f"        Recall: {round(recall_score(y_test, y_pred, average='micro'), 3)}")
+    print(f"        Precision: {round(precision_score(y_test, y_pred, average='micro'), 3)}")
+    print(f"        F1 score: {round(f1_score(y_test, y_pred, average='micro'), 3)}")
+
+    # NaiveBayes
+    gnb = GaussianNB()
+    y_pred = gnb.fit(X_train, y_train).predict(X_test)
+    print("    NaiveBayes:")
+    print(f"        Recall: {round(recall_score(y_test, y_pred, average='micro'), 3)}")
+    print(f"        Precision: {round(precision_score(y_test, y_pred, average='micro'), 3)}")
+    print(f"        F1 score: {round(f1_score(y_test, y_pred, average='micro'), 3)}")
