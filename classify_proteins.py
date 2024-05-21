@@ -10,6 +10,8 @@ Goal: given the protein sequences from two protein families
 (globin and zinc finger), create a predictive model for a 
 binary classification problem.
 '''
+import argparse
+
 import numpy as np
 import pandas as pd
 
@@ -20,6 +22,14 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import recall_score, precision_score, f1_score
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("-a", dest = "zincfinger_file")
+parser.add_argument("-b", dest = "globin_file")
+parser.add_argument("-k", dest = "kmer")
+
+args = parser.parse_args()
 
 def gen_all_2mers():
     # amino_acids =  ['A', 'R', 'N', 'D', 'C', 'Q', 
@@ -40,7 +50,7 @@ def gen_all_2mers():
 def create_df():
     columns = gen_all_2mers()
     columns.append("class")
-    data = [[0] * len(columns)]
+    data = []
     df = pd.DataFrame(data, columns=columns)
     return df
 
@@ -58,7 +68,7 @@ def file_to_seqs(filepath):
 
 def seq_to_pairs(seq):
     d = {}
-    for i in range(0, len(seq)-1, 2):
+    for i in range(0, len(seq)-1, int(args.kmer)):
         pair = seq[i]+seq[i+1]
         d[pair] = d.get(pair, 0) + 1
     return d
@@ -79,14 +89,14 @@ def fill_df(df, seqs, type):
             df.at[protein, amino] = freq / norm
     return df
 
-globin_seqs = file_to_seqs("./sequences/globin.fasta")
-zincfinger_seqs = file_to_seqs("./sequences/zincfinger.fasta")
+zincfinger_seqs = file_to_seqs(args.zincfinger_file)
+globin_seqs = file_to_seqs(args.globin_file)
 
 df = create_df()
 fill_df(df, zincfinger_seqs, "zincfinger")
 fill_df(df, globin_seqs, "globin")
 
-# print(df)
+print(df)
 
 # # find letters that are not in our alphabet
 # amino_acids =  ['A', 'R', 'N', 'D', 'C', 'Q', 
