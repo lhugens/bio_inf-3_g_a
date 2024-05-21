@@ -10,6 +10,7 @@ Goal: given the protein sequences from two protein families
 (globin and zinc finger), create a predictive model for a 
 binary classification problem.
 '''
+import numpy as np
 import pandas as pd
 
 from sklearn.pipeline import make_pipeline
@@ -122,33 +123,89 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_
 
 skf = StratifiedKFold(n_splits=10)
 
+model_svm = clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+model_rf = RandomForestClassifier(max_depth=2, random_state=0)
+model_nb = GaussianNB()
+
+cols = ["recall", "precision", "f1-score"]
+data = []
+results = pd.DataFrame(data, columns=cols)
+
 for i, (train_index, test_index) in enumerate(skf.split(X, y)):
-    print(f"Fold {i}:")
-    # print(f"    Train: index={train_index}")
-    # print(f"    Test: index={test_index}")
     X_train, X_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
 
     # SVM
-    clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
-    y_pred = clf.fit(X_train, y_train).predict(X_test)
-    print("    SVM:")
-    print(f"        Recall: {round(recall_score(y_test, y_pred, average='micro'), 3)}")
-    print(f"        Precision: {round(precision_score(y_test, y_pred, average='micro'), 3)}")
-    print(f"        F1 score: {round(f1_score(y_test, y_pred, average='micro'), 3)}")
+    y_pred = model_svm.fit(X_train, y_train).predict(X_test)
+    rscore = round(recall_score(y_test, y_pred, average='micro'), 4)
+    if 'SVM' not in results:
+        results.at["SVM", "recall"] = rscore
+    else:
+        results.at["SVM", "recall"] = max(results.at["SVM", "recall"], rscore)
+
+    pscore = round(precision_score(y_test, y_pred, average='micro'), 4)
+    if 'SVM' not in results:
+        results.at["SVM", "precision"] = pscore
+    else:
+        results.at["SVM", "precision"] = max(results.at["SVM", "precision"], pscore)
+
+    f1score = round(f1_score(y_test, y_pred, average='micro'), 4)
+    if 'SVM' not in results:
+        results.at["SVM", "f1-score"] = pscore
+    else:
+        results.at["SVM", "f1-score"] = max(results.at["SVM", "f1-score"], pscore)
 
     # Random Forests
-    clf = RandomForestClassifier(max_depth=2, random_state=0)
-    y_pred = clf.fit(X_train, y_train).predict(X_test)
-    print("    Random Forests:")
-    print(f"        Recall: {round(recall_score(y_test, y_pred, average='micro'), 3)}")
-    print(f"        Precision: {round(precision_score(y_test, y_pred, average='micro'), 3)}")
-    print(f"        F1 score: {round(f1_score(y_test, y_pred, average='micro'), 3)}")
+    y_pred = model_rf.fit(X_train, y_train).predict(X_test)
+    rscore = round(recall_score(y_test, y_pred, average='micro'), 4)
+    if 'Random Forests' not in results:
+        results.at["Random Forests", "recall"] = rscore
+    else:
+        results.at["Random Forests", "recall"] = max(results.at["Random Forests", "recall"], rscore)
+
+    pscore = round(precision_score(y_test, y_pred, average='micro'), 4)
+    if 'Random Forests' not in results:
+        results.at["Random Forests", "precision"] = pscore
+    else:
+        results.at["Random Forests", "precision"] = max(results.at["Random Forests", "precision"], pscore)
+
+    f1score = round(f1_score(y_test, y_pred, average='micro'), 4)
+    if 'Random Forests' not in results:
+        results.at["Random Forests", "f1-score"] = pscore
+    else:
+        results.at["Random Forests", "f1-score"] = max(results.at["NaiveBayes", "f1-score"], pscore)
 
     # NaiveBayes
-    gnb = GaussianNB()
-    y_pred = gnb.fit(X_train, y_train).predict(X_test)
-    print("    NaiveBayes:")
-    print(f"        Recall: {round(recall_score(y_test, y_pred, average='micro'), 3)}")
-    print(f"        Precision: {round(precision_score(y_test, y_pred, average='micro'), 3)}")
-    print(f"        F1 score: {round(f1_score(y_test, y_pred, average='micro'), 3)}")
+    y_pred = model_nb.fit(X_train, y_train).predict(X_test)
+    rscore = round(recall_score(y_test, y_pred, average='micro'), 4)
+    if 'NaiveBayes' not in results:
+        results.at["NaiveBayes", "recall"] = rscore
+    else:
+        results.at["NaiveBayes", "recall"] = max(results.at["NaiveBayes", "recall"], rscore)
+
+    pscore = round(precision_score(y_test, y_pred, average='micro'), 4)
+    if 'NaiveBayes' not in results:
+        results.at["NaiveBayes", "precision"] = pscore
+    else:
+        results.at["NaiveBayes", "precision"] = max(results.at["NaiveBayes", "precision"], pscore)
+
+    f1score = round(f1_score(y_test, y_pred, average='micro'), 4)
+    if 'NaiveBayes' not in results:
+        results.at["NaiveBayes", "f1-score"] = pscore
+    else:
+        results.at["NaiveBayes", "f1-score"] = max(results.at["NaiveBayes", "f1-score"], pscore)
+
+def print_bold_best_model(df):
+    row, col = results.stack().idxmax()
+    BOLD = '\033[1m'
+    RESET = '\033[0m'   
+    df_str = df.to_string(index=True)
+    lines = df_str.split('\n')
+    for i in range(len(lines)):
+        if row in lines[i]:
+            lines[i] = BOLD + lines[i] + RESET
+    formatted_df_str = '\n'.join(lines)
+    print(formatted_df_str)
+
+# Use the function
+print_bold_best_model(results)
