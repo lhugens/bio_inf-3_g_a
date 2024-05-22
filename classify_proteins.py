@@ -115,15 +115,9 @@ results = pd.DataFrame(data, columns=cols)
 av = pd.DataFrame(data, columns=cols)
 std = pd.DataFrame(data, columns=cols)
 
-svm_recalls = []
-svm_precisions = []
-svm_f1s = []
-rf_recalls = []
-rf_precisions = []
-rf_f1s = []
-nb_recalls = []
-nb_precisions = []
-nb_f1s = []
+svm_recalls, svm_precisions, svm_f1s = [], [], []
+rf_recalls, rf_precisions, rf_f1s = [], [], []
+nb_recalls, nb_precisions, nb_f1s = [], [], []
 
 for i, (train_index, test_index) in enumerate(skf.split(X, y)):
     X_train, X_test = X[train_index], X[test_index]
@@ -222,9 +216,6 @@ std.at["Naive Bayes", "precision"] = np.std(np.array(nb_precisions))
 std.at["Naive Bayes", "f1-score"] = np.std(np.array(nb_f1s))
 print(std, "\n")
 
-
-
-
 def print_bold_best_model(df):
     row, col = results.stack().idxmax()
     BOLD = '\033[1m'
@@ -237,5 +228,4 @@ def print_bold_best_model(df):
     formatted_df_str = '\n'.join(lines)
     print(formatted_df_str)
 
-# Use the function
 print_bold_best_model(results)
