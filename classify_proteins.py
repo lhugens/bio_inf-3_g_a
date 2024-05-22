@@ -112,6 +112,18 @@ model_nb = GaussianNB()
 cols = ["recall", "precision", "f1-score"]
 data = []
 results = pd.DataFrame(data, columns=cols)
+av = pd.DataFrame(data, columns=cols)
+std = pd.DataFrame(data, columns=cols)
+
+svm_recalls = []
+svm_precisions = []
+svm_f1s = []
+rf_recalls = []
+rf_precisions = []
+rf_f1s = []
+nb_recalls = []
+nb_precisions = []
+nb_f1s = []
 
 for i, (train_index, test_index) in enumerate(skf.split(X, y)):
     X_train, X_test = X[train_index], X[test_index]
@@ -120,18 +132,21 @@ for i, (train_index, test_index) in enumerate(skf.split(X, y)):
     # SVM
     y_pred = model_svm.fit(X_train, y_train).predict(X_test)
     rscore = round(recall_score(y_test, y_pred, average='micro'), 4)
+    svm_recalls.append(rscore)
     if 'SVM' not in results:
         results.at["SVM", "recall"] = rscore
     else:
         results.at["SVM", "recall"] = max(results.at["SVM", "recall"], rscore)
 
     pscore = round(precision_score(y_test, y_pred, average='micro'), 4)
+    svm_precisions.append(pscore)
     if 'SVM' not in results:
         results.at["SVM", "precision"] = pscore
     else:
         results.at["SVM", "precision"] = max(results.at["SVM", "precision"], pscore)
 
     f1score = round(f1_score(y_test, y_pred, average='micro'), 4)
+    svm_f1s.append(f1score)
     if 'SVM' not in results:
         results.at["SVM", "f1-score"] = pscore
     else:
@@ -140,18 +155,21 @@ for i, (train_index, test_index) in enumerate(skf.split(X, y)):
     # Random Forests
     y_pred = model_rf.fit(X_train, y_train).predict(X_test)
     rscore = round(recall_score(y_test, y_pred, average='micro'), 4)
+    rf_recalls.append(rscore)
     if 'Random Forests' not in results:
         results.at["Random Forests", "recall"] = rscore
     else:
         results.at["Random Forests", "recall"] = max(results.at["Random Forests", "recall"], rscore)
 
     pscore = round(precision_score(y_test, y_pred, average='micro'), 4)
+    rf_precisions.append(pscore)
     if 'Random Forests' not in results:
         results.at["Random Forests", "precision"] = pscore
     else:
         results.at["Random Forests", "precision"] = max(results.at["Random Forests", "precision"], pscore)
 
     f1score = round(f1_score(y_test, y_pred, average='micro'), 4)
+    rf_f1s.append(f1score)
     if 'Random Forests' not in results:
         results.at["Random Forests", "f1-score"] = pscore
     else:
@@ -160,22 +178,52 @@ for i, (train_index, test_index) in enumerate(skf.split(X, y)):
     # NaiveBayes
     y_pred = model_nb.fit(X_train, y_train).predict(X_test)
     rscore = round(recall_score(y_test, y_pred, average='micro'), 4)
+    nb_recalls.append(rscore)
     if 'NaiveBayes' not in results:
         results.at["NaiveBayes", "recall"] = rscore
     else:
         results.at["NaiveBayes", "recall"] = max(results.at["NaiveBayes", "recall"], rscore)
 
     pscore = round(precision_score(y_test, y_pred, average='micro'), 4)
+    nb_precisions.append(pscore)
     if 'NaiveBayes' not in results:
         results.at["NaiveBayes", "precision"] = pscore
     else:
         results.at["NaiveBayes", "precision"] = max(results.at["NaiveBayes", "precision"], pscore)
 
     f1score = round(f1_score(y_test, y_pred, average='micro'), 4)
+    nb_f1s.append(f1score)
     if 'NaiveBayes' not in results:
         results.at["NaiveBayes", "f1-score"] = pscore
     else:
         results.at["NaiveBayes", "f1-score"] = max(results.at["NaiveBayes", "f1-score"], pscore)
+    
+print("\nAverages:")
+av.at["SVM", "recall"] = np.mean(np.array(svm_recalls))
+av.at["SVM", "precision"] = np.mean(np.array(svm_precisions))
+av.at["SVM", "f1-score"] = np.mean(np.array(svm_f1s))
+av.at["Random Forests", "recall"] = np.mean(np.array(rf_recalls))
+av.at["Random Forests", "precision"] = np.mean(np.array(rf_precisions))
+av.at["Random Forests", "f1-score"] = np.mean(np.array(rf_f1s))
+av.at["Naive Bayes", "recall"] = np.mean(np.array(nb_recalls))
+av.at["Naive Bayes", "precision"] = np.mean(np.array(nb_precisions))
+av.at["Naive Bayes", "f1-score"] = np.mean(np.array(nb_f1s))
+print(av)
+
+print("\nStandard Deviation:")
+std.at["SVM", "recall"] = np.std(np.array(svm_recalls))
+std.at["SVM", "precision"] = np.std(np.array(svm_precisions))
+std.at["SVM", "f1-score"] = np.std(np.array(svm_f1s))
+std.at["Random Forests", "recall"] = np.std(np.array(rf_recalls))
+std.at["Random Forests", "precision"] = np.std(np.array(rf_precisions))
+std.at["Random Forests", "f1-score"] = np.std(np.array(rf_f1s))
+std.at["Naive Bayes", "recall"] = np.std(np.array(nb_recalls))
+std.at["Naive Bayes", "precision"] = np.std(np.array(nb_precisions))
+std.at["Naive Bayes", "f1-score"] = np.std(np.array(nb_f1s))
+print(std, "\n")
+
+
+
 
 def print_bold_best_model(df):
     row, col = results.stack().idxmax()
