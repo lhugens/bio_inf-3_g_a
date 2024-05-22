@@ -216,6 +216,8 @@ std.at["Naive Bayes", "precision"] = np.std(np.array(nb_precisions))
 std.at["Naive Bayes", "f1-score"] = np.std(np.array(nb_f1s))
 print(std, "\n")
 
+results.to_csv("results.csv", index=True)
+
 def print_bold_best_model(df):
     row, col = results.stack().idxmax()
     BOLD = '\033[1m'

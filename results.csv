@@ -1,0 +1,4 @@
+,recall,precision,f1-score
+SVM,0.9861,0.9861,0.9861
+Random Forests,0.9583,0.9583,0.9583
+NaiveBayes,0.9514,0.9514,0.9514
