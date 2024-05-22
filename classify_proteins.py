@@ -32,14 +32,10 @@ parser.add_argument("-k", dest = "kmer")
 args = parser.parse_args()
 
 def gen_all_2mers():
-    # amino_acids =  ['A', 'R', 'N', 'D', 'C', 'Q', 
-    #                 'E', 'G', 'H', 'I', 'L', 'K', 
-    #                 'M', 'F', 'P', 'S', 'T', 'W', 
-    #                 'Y', 'V']
     amino_acids =  ['A', 'R', 'N', 'D', 'C', 'Q', 
                     'E', 'G', 'H', 'I', 'L', 'K', 
                     'M', 'F', 'P', 'S', 'T', 'W', 
-                    'Y', 'V', 'X', 'Z', 'B'] # with X, Z, B added
+                    'Y', 'V']
     all = []
     for a in amino_acids:
         for b in amino_acids:
@@ -74,19 +70,21 @@ def seq_to_pairs(seq):
     return d
 
 def fill_df(df, seqs, type):
-    norm = len(df.columns)-1
-
     if type == "zincfinger":
         label = 0
     elif type == "globin":
         label = 1
 
     for protein, seq in seqs.items():
+        norm = len([x for x in seq if x not in ["X","Z","B"]])/int(args.kmer)
         df.loc[protein] = ([0.0] * len(df.columns)) 
         df.at[protein, "class"] = label
         d = seq_to_pairs(seq)
         for amino, freq in d.items():
-            df.at[protein, amino] = freq / norm
+            if "X" in amino or "Z" in amino or "B" in amino:
+                continue
+            else:
+                df.at[protein, amino] = freq / norm
     return df
 
 zincfinger_seqs = file_to_seqs(args.zincfinger_file)
@@ -97,32 +95,6 @@ fill_df(df, zincfinger_seqs, "zincfinger")
 fill_df(df, globin_seqs, "globin")
 
 print(df)
-
-# # find letters that are not in our alphabet
-# amino_acids =  ['A', 'R', 'N', 'D', 'C', 'Q', 
-#                 'E', 'G', 'H', 'I', 'L', 'K', 
-#                 'M', 'F', 'P', 'S', 'T', 'W', 
-#                 'Y', 'V']
-
-# for protein, seq in globin_seqs.items():
-#     if len(set(seq)-set(amino_acids)) != 0:
-#         print(set(seq)-set(amino_acids))
-# # we have letters that appear: ['X', 'Z', 'B'], why??
-
-# '''
-# 'X': This letter is used to represent an unknown or unspecified amino acid. 
-#     In cases where the identity of an amino acid cannot be determined with certainty, 
-#     'X' is used as a placeholder. 
-#     This could be due to ambiguity in the sequencing data or when the amino acid at that position is not yet identified.
-
-# 'Z': This letter is used to denote either glutamine (Q) or glutamic acid (E). 
-#     This ambiguity often arises because these two amino acids can be difficult to 
-#     distinguish in certain experimental contexts, such as mass spectrometry.
-
-# 'B': This letter represents either asparagine (N) or aspartic acid (D). 
-#     Similar to 'Z', this ambiguity occurs because these two amino acids are 
-#     chemically similar and may not be easily differentiated in some types of analysis.
-# '''
 
 # Use 2 or 3 ML algorithms: SVM, Random Forests of NaiveBayes
 # Evaluate the models with 3 or 4 measures, e.g. recall, precision or F1-score
